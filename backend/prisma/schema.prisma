@@ -1,0 +1,71 @@
+// Eternal Return codex database schema
+// Local dev uses SQLite (zero-config); swap the datasource to Postgres/MySQL for prod later.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Character {
+  id          Int      @id @default(autoincrement())
+  code        Int      @unique // in-game character code
+  name        String
+  nameEn      String
+  weaponType  String // e.g. "장검", "쌍절곤", "저격소총" ...
+  difficulty  Int      @default(1) // 1~3
+  description String   @default("")
+  imageUrl    String   @default("")
+  skills      Skill[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Skill {
+  id          Int       @id @default(autoincrement())
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  characterId Int
+  slot        String // "PASSIVE" | "SKILL_1" | "SKILL_2" | "SKILL_3" | "SKILL_4" | "NORMAL_ATTACK"
+  name        String
+  description String    @default("")
+  imageUrl    String    @default("")
+  order       Int       @default(0)
+}
+
+model Item {
+  id           Int      @id @default(autoincrement())
+  code         Int      @unique
+  name         String
+  grade        Int      @default(1) // 1(basic) ~ 4(mythic) etc.
+  type         String // "무기" | "방어구" | "장신구" | "소비" | "설치" ...
+  stats        String   @default("{}") // JSON-encoded stat block
+  description  String   @default("")
+  imageUrl     String   @default("")
+  materialOf   Item[]   @relation("Recipe")
+  materials    Item[]   @relation("Recipe")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model GameMap {
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String    @default("")
+  imageUrl    String    @default("")
+  monsters    Monster[]
+}
+
+model Monster {
+  id          Int      @id @default(autoincrement())
+  code        Int?     @unique // in-game monster code (null for hand-seeded rows without one)
+  name        String
+  type        String // "일반" | "우두머리" | "필드 보스" ...
+  map         GameMap? @relation(fields: [mapId], references: [id])
+  mapId       Int?
+  description String   @default("")
+  imageUrl    String   @default("")
+  dropInfo    String   @default("")
+}
