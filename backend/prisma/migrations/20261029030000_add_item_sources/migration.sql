@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Item" ADD COLUMN "spawnAreas" TEXT NOT NULL DEFAULT '[]';
+ALTER TABLE "Item" ADD COLUMN "droppedBy" TEXT NOT NULL DEFAULT '[]';
