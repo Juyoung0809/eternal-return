@@ -12,9 +12,9 @@ import { getMetaData, getMetaHash, getL10nMap } from "../src/services/erApiClien
 const OUT_DIR = path.resolve(import.meta.dirname, "..", "data", "raw");
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Tables relevant to the codex (character / item / monster). Add more metaType
+// Tables relevant to the codex (character / item). Add more metaType
 // names here as needed — see getMetaData's doc comment for the known list.
-const META_TYPES = ["Character", "ItemWeapon", "ItemArmor", "ItemSpecial", "ItemConsumable", "ItemMisc", "Monster"];
+const META_TYPES = ["Character", "ItemWeapon", "ItemArmor", "ItemSpecial", "ItemConsumable", "ItemMisc"];
 
 async function main() {
   await mkdir(OUT_DIR, { recursive: true });

@@ -1,10 +1,10 @@
 import "dotenv/config";
-import express from "express";
+import express, { type ErrorRequestHandler } from "express";
 import cors from "cors";
 import { charactersRouter } from "./routes/characters.js";
 import { itemsRouter } from "./routes/items.js";
-import { mapsRouter } from "./routes/maps.js";
-import { monstersRouter } from "./routes/monsters.js";
+import { routesRouter } from "./routes/routes.js";
+import { imagesRouter } from "./routes/images.js";
 
 const app = express();
 const port = Number(process.env.PORT) || 4000;
@@ -18,8 +18,20 @@ app.get("/api/health", (_req, res) => {
 
 app.use("/api/characters", charactersRouter);
 app.use("/api/items", itemsRouter);
-app.use("/api/maps", mapsRouter);
-app.use("/api/monsters", monstersRouter);
+app.use("/api/routes", routesRouter);
+app.use("/api/images", imagesRouter);
+
+app.use("/api", (_req, res) => {
+  res.status(404).json({ error: "not found" });
+});
+
+// Express 5 forwards rejected promises from async handlers here, so a DB error
+// returns a 500 instead of leaving the request hanging.
+const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
+  console.error(err);
+  res.status(500).json({ error: "internal server error" });
+};
+app.use(errorHandler);
 
 app.listen(port, () => {
   console.log(`eternal-return backend listening on http://localhost:${port}`);

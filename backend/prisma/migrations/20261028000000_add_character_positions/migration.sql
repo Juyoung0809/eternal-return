@@ -1,0 +1,1 @@
+ALTER TABLE "Character" ADD COLUMN "positions" TEXT NOT NULL DEFAULT '[]';

@@ -1,14 +1,11 @@
 // Sample codex data so the app is browsable out of the box.
 // Replace/expand with real game data as it's curated — this is just a starter set.
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import "dotenv/config";
+import { prisma } from "../src/prisma.js";
 
 async function main() {
   await prisma.skill.deleteMany();
   await prisma.character.deleteMany();
-  await prisma.monster.deleteMany();
-  await prisma.gameMap.deleteMany();
   await prisma.item.deleteMany();
 
   await prisma.character.create({
@@ -49,32 +46,6 @@ async function main() {
         ],
       },
     },
-  });
-
-  const forest = await prisma.gameMap.create({
-    data: {
-      name: "아이스브레이커 섬",
-      description: "이터널 리턴의 기본 배틀그라운드 맵.",
-    },
-  });
-
-  await prisma.monster.createMany({
-    data: [
-      {
-        name: "멧돼지",
-        type: "일반",
-        mapId: forest.id,
-        description: "초반 사냥에 적합한 저위협 야생동물.",
-        dropInfo: "고기, 가죽",
-      },
-      {
-        name: "붉은 늑대 우두머리",
-        type: "우두머리",
-        mapId: forest.id,
-        description: "중반 파밍 타이밍에 등장하는 강화 몬스터.",
-        dropInfo: "희귀 등급 이상 아이템, 성장의 돌",
-      },
-    ],
   });
 
   const basicSword = await prisma.item.create({

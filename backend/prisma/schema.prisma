@@ -11,17 +11,66 @@ datasource db {
 }
 
 model Character {
-  id          Int      @id @default(autoincrement())
-  code        Int      @unique // in-game character code
+  id           Int               @id @default(autoincrement())
+  code         Int               @unique // in-game character code
+  name         String
+  nameEn       String
+  weaponType   String // e.g. "장검", "쌍절곤", "저격소총" ...
+  positions    String            @default("[]") // JSON array of official archetype names, e.g. ["전사","탱커"]
+  difficulty   Int               @default(1) // 1~3
+  description  String            @default("")
+  imageUrl     String            @default("") // profile (fankit "Mini") image
+  fullImageUrl String            @default("") // full-body default skin (fankit "Full")
+  skills       Skill[]
+  skins        Skin[]
+  routes       Route[]
+  weapons      CharacterWeapon[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+}
+
+// A character skin's full-body art from the community fankit. The default skin is
+// order 0; code links to the API's CharacterSkin table when the name could be matched.
+model Skin {
+  id          Int       @id @default(autoincrement())
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  characterId Int
+  code        Int?
   name        String
-  nameEn      String
-  weaponType  String // e.g. "장검", "쌍절곤", "저격소총" ...
-  difficulty  Int      @default(1) // 1~3
-  description String   @default("")
-  imageUrl    String   @default("")
-  skills      Skill[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  imageUrl    String
+  order       Int       @default(0)
+}
+
+// A player-shared build route from /v1/weaponRoutes/recommend. Names are resolved to
+// Korean at import time; list fields are JSON-encoded like Item.stats.
+model Route {
+  id                Int       @id @default(autoincrement())
+  routeId           Int       @unique // id in the official API
+  title             String
+  authorNickname    String
+  character         Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  characterId       Int
+  weaponType        String
+  itemCodes         String    @default("[]") // JSON number[] — target item per equipment slot
+  lateItemSets      String    @default("[]") // JSON number[][] — the author's late-game item sets, in order
+  remoteItemCodes   String    @default("[]") // JSON number[] — items bought through the remote drone
+  areas             String    @default("[]") // JSON string[] — area names in visit order
+  // JSON number[] of Trait codes: [core, main sub, main sub, secondary sub, secondary sub]
+  traitCodes        String    @default("[]")
+  tacticalSkillCode Int       @default(0) // TacticalSkill.code
+  skillPath         String    @default("") // "Q,W,,E,T" — key per level 1-20, blank when unplanned
+  description       String    @default("")
+  likes             Int       @default(0)
+  winRate           Float     @default(0)
+  version           String    @default("")
+  languageCode      String    @default("")
+  sharedAt          DateTime // API's updateDtm
+
+  // /api/routes pages through ~45k rows by these sort keys, optionally per character.
+  @@index([characterId])
+  @@index([likes])
+  @@index([winRate])
+  @@index([sharedAt])
 }
 
 model Skill {
@@ -31,41 +80,85 @@ model Skill {
   slot        String // "PASSIVE" | "SKILL_1" | "SKILL_2" | "SKILL_3" | "SKILL_4" | "NORMAL_ATTACK"
   name        String
   description String    @default("")
+  tips        String    @default("") // extra mechanics notes (l10n ExpansionTip)
+  scaling     String    @default("[]") // JSON string[] — stats the damage scales with
+  variants    String    @default("[]") // JSON {name, description}[] — other forms (2nd hit, empowered, ...)
   imageUrl    String    @default("")
   order       Int       @default(0)
 }
 
 model Item {
-  id           Int      @id @default(autoincrement())
-  code         Int      @unique
-  name         String
-  grade        Int      @default(1) // 1(basic) ~ 4(mythic) etc.
-  type         String // "무기" | "방어구" | "장신구" | "소비" | "설치" ...
-  stats        String   @default("{}") // JSON-encoded stat block
-  description  String   @default("")
-  imageUrl     String   @default("")
-  materialOf   Item[]   @relation("Recipe")
-  materials    Item[]   @relation("Recipe")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-}
-
-model GameMap {
-  id          Int       @id @default(autoincrement())
-  name        String
-  description String    @default("")
-  imageUrl    String    @default("")
-  monsters    Monster[]
-}
-
-model Monster {
   id          Int      @id @default(autoincrement())
-  code        Int?     @unique // in-game monster code (null for hand-seeded rows without one)
+  code        Int      @unique
   name        String
-  type        String // "일반" | "우두머리" | "필드 보스" ...
-  map         GameMap? @relation(fields: [mapId], references: [id])
-  mapId       Int?
-  description String   @default("")
+  grade       Int      @default(1) // 1(일반) 2(고급) 3(희귀) 4(영웅) 5(전설) 6(초월)
+  type        String // "무기" | "방어구" | "특수" | "소비" | "재료"
+  subType     String   @default("") // equipment only: weapon kind ("단검") or armor slot ("머리")
+  stats       String   @default("{}") // JSON-encoded stat block
+  description String   @default("") // effect text (Item/Effects)
+  flavor      String   @default("") // lore text (Item/Help)
+  spawnAreas  String   @default("[]") // JSON string[] — areas whose boxes hold it (ItemSpawn)
+  droppedBy   String   @default("[]") // JSON string[] — wildlife that drop it (DropGroup)
   imageUrl    String   @default("")
-  dropInfo    String   @default("")
+  materialOf  Item[]   @relation("Recipe")
+  materials   Item[]   @relation("Recipe")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Trait (특성) options. Each group (파괴/혼돈/저항/지원) has 4 Core and 4+4 Sub1/Sub2
+// traits; a route picks a core plus two subs from its main group and two subs from a
+// secondary group.
+model Trait {
+  code        Int    @id // official trait code, e.g. 7000201
+  name        String
+  description String @default("")
+  group       String // "Havoc" | "Chaos" | "Fortification" | "Support"
+  type        String // "Core" | "Sub1" | "Sub2"
+  order       Int    @default(0) // official traitSortOrder
+  imageUrl    String @default("")
+}
+
+model TraitGroup {
+  key      String @id // "Havoc" ...
+  name     String // "파괴" ...
+  imageUrl String @default("")
+}
+
+model TacticalSkill {
+  code        Int    @id // TacticalSkillSetGroup.group, as routes reference it
+  name        String
+  description String @default("")
+  imageUrl    String @default("")
+}
+
+// A weapon kind and its weapon skill (D). key is the API's mastery key ("OneHandSword").
+model WeaponType {
+  key              String            @id
+  name             String // "단검"
+  description      String            @default("")
+  skillName        String            @default("")
+  skillDescription String            @default("")
+  skillImageUrl    String            @default("")
+  characters       CharacterWeapon[]
+}
+
+// One weapon a character can use, with the official 5-axis ratings (CharacterAttributes,
+// 1-5 each) and the in-game guide text for that pairing.
+model CharacterWeapon {
+  id          Int        @id @default(autoincrement())
+  character   Character  @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  characterId Int
+  weapon      WeaponType @relation(fields: [weaponKey], references: [key])
+  weaponKey   String
+  order       Int        @default(0)
+  difficulty  Int        @default(1)
+  attack      Int        @default(0)
+  defense     Int        @default(0)
+  disruptor   Int        @default(0)
+  move        Int        @default(0)
+  assistance  Int        @default(0)
+  guide       String     @default("")
+
+  @@unique([characterId, weaponKey])
 }

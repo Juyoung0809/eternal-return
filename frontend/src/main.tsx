@@ -6,11 +6,8 @@ import App from "./App.tsx";
 import CharactersPage from "./pages/CharactersPage.tsx";
 import CharacterDetailPage from "./pages/CharacterDetailPage.tsx";
 import ItemsPage from "./pages/ItemsPage.tsx";
-import ItemDetailPage from "./pages/ItemDetailPage.tsx";
-import MapsPage from "./pages/MapsPage.tsx";
-import MapDetailPage from "./pages/MapDetailPage.tsx";
-import MonstersPage from "./pages/MonstersPage.tsx";
-import MonsterDetailPage from "./pages/MonsterDetailPage.tsx";
+import RoutesPage from "./pages/RoutesPage.tsx";
+import RouteDetailPage from "./pages/RouteDetailPage.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -21,11 +18,8 @@ createRoot(document.getElementById("root")!).render(
           <Route path="characters" element={<CharactersPage />} />
           <Route path="characters/:id" element={<CharacterDetailPage />} />
           <Route path="items" element={<ItemsPage />} />
-          <Route path="items/:id" element={<ItemDetailPage />} />
-          <Route path="maps" element={<MapsPage />} />
-          <Route path="maps/:id" element={<MapDetailPage />} />
-          <Route path="monsters" element={<MonstersPage />} />
-          <Route path="monsters/:id" element={<MonsterDetailPage />} />
+          <Route path="routes" element={<RoutesPage />} />
+          <Route path="routes/:id" element={<RouteDetailPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

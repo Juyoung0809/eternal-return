@@ -7,23 +7,28 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
+    "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "seed": "tsx prisma/seed.ts",
+    "db:setup": "prisma migrate deploy",
+    "seed": "prisma migrate deploy && tsx prisma/seed.ts",
+    "er:check": "tsx scripts/checkErApiKey.ts",
     "er:sync": "tsx scripts/fetchErData.ts",
-    "er:import": "tsx scripts/importErData.ts"
+    "er:import": "tsx scripts/importErData.ts",
+    "er:routes": "tsx scripts/importRoutes.ts",
+    "er:images": "tsx scripts/importFankitImages.ts"
   },
   "dependencies": {
-    "@prisma/client": "^6.3.1",
+    "@prisma/client": "^6.19.3",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
-    "express": "^4.21.2"
+    "express": "^5.3.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
-    "@types/express": "^4.17.21",
+    "@types/express": "^5.0.6",
     "@types/node": "^22.10.5",
-    "prisma": "^6.3.1",
+    "prisma": "^6.19.3",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"
   },

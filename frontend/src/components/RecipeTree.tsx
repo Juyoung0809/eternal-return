@@ -1,7 +1,5 @@
-import { Link } from "react-router-dom";
 import type { RecipeMaterial } from "../api/types";
-
-const GRADE_LABEL: Record<number, string> = { 1: "일반", 2: "고급", 3: "희귀", 4: "영웅", 5: "전설", 6: "초월" };
+import ItemTile from "./ItemTile";
 
 // Renders one item box, and — if it was itself crafted from something — the "+"-joined
 // pair of materials underneath, recursing down to the base components. Reads top-down:
@@ -9,11 +7,7 @@ const GRADE_LABEL: Record<number, string> = { 1: "일반", 2: "고급", 3: "희�
 function RecipeNode({ item }: { item: RecipeMaterial }) {
   return (
     <div className="recipe-node">
-      <Link to={`/items/${item.id}`} className="recipe-node__box">
-        <span className="recipe-node__thumb">{item.imageUrl ? <img src={item.imageUrl} alt={item.name} /> : item.name[0]}</span>
-        <span className="recipe-node__name">{item.name}</span>
-        <span className={`tag tag--grade-${item.grade} recipe-node__grade`}>{GRADE_LABEL[item.grade] ?? item.grade}</span>
-      </Link>
+      <ItemTile item={item} />
 
       {item.materials.length > 0 && (
         <>
