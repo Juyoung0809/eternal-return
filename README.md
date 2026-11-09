@@ -19,7 +19,7 @@ eternal-return/
 ```bash
 npm install                          # 루트에서 두 워크스페이스 의존성 설치 (+ prisma generate)
 cp backend/.env.example backend/.env # 최초 1회: 환경변수 파일 생성 (새 PC마다 필요, git에 안 올라감)
-npm run seed                         # 최초 1회: 마이그레이션 적용(DB 생성) + 샘플 데이터 시딩
+npm run seed                         # 최초 1회: 마이그레이션 적용(DB 생성) + 데이터 채우기(스냅샷이 있으면 실제 데이터 복원)
 npm run dev                  # 백엔드(4000) + 프론트엔드(5173) 동시 실행
 ```
 
@@ -28,6 +28,8 @@ npm run dev                  # 백엔드(4000) + 프론트엔드(5173) 동시 �
 개별 실행도 가능합니다: `npm run dev:backend`, `npm run dev:frontend`.
 
 참고:
+- Node.js 22.13 이상이 필요합니다(`seed`의 스냅샷 복원이 Node 내장 `node:sqlite`를 씁니다).
+- 다른 PC에서는 `npm install` → `cp backend/.env.example backend/.env` → `npm run seed`만 하면 `backend/prisma/snapshot.db.gz`에서 전체 데이터가 복원됩니다. API 키는 데이터를 새로 받을 때(`er:*` 스크립트)만 필요합니다.
 - Prisma CLI 설정은 `backend/prisma.config.ts`에 있습니다(예전 `package.json#prisma` 대신). 이 파일이 있으면 CLI가 `.env`를 스스로 읽지 않아서 설정 파일이 `dotenv`를 불러옵니다.
 - npm 11은 의존성의 설치 스크립트를 기본으로 막습니다. 꼭 필요한 것(esbuild, prisma 엔진 내려받기 등)만 루트 `package.json`의 `allowScripts`에 허용해 두었습니다.
 - Prisma CLI가 쓰는 `deepmerge-ts`의 보안 취약점(GHSA-ggr8-5vv4-36mx)은 Prisma 7로 올리지 않고 루트 `package.json`의 `overrides`로 고쳐진 8.x를 쓰게 했습니다.
@@ -49,6 +51,7 @@ npm run dev                  # 백엔드(4000) + 프론트엔드(5173) 동시 �
    - `npm run er:import -w backend` — 캐릭터 91종(스킬·포지션 포함) · 아이템 809종(무기/방어구/특수/소비/재료) · 특성 48종 · 전술 스킬을 upsert합니다. API에 더 이상 없는 행(시드 샘플 데이터 포함)은 삭제합니다. 1분 내외.
    - `npm run er:routes -w backend` — 공유 루트 전체(2026-10 기준 약 4만 6천 개, 500여 페이지)를 동기화합니다. 10~15분 걸립니다. `ROUTE_MAX_PAGES=5`로 일부만 받아 빠르게 확인할 수 있습니다(이때는 오래된 루트를 지우지 않음).
    - `npm run er:images -w backend` — 팬키트에서 실험체 프로필·전신·스킨·스킬 아이콘과 아이템·특성·전술 스킬 아이콘을 연결합니다(아래 "이미지"). 몇 분 걸립니다. `-- --icons-only`를 붙이면 실험체 이미지는 건너뜁니다.
+   - `npm run db:snapshot -w backend` — 다 받은 DB를 `backend/prisma/snapshot.db.gz`(압축, 약 7MB)로 저장합니다. 이후 `npm run seed`나 `prisma migrate reset`(초기화 뒤 seed가 자동 실행됨)을 하면 API를 다시 부르지 않고 이 스냅샷에서 전체 데이터가 복원됩니다(`backend/prisma/snapshot.ts`, Node 내장 `node:sqlite` 사용). 스냅샷이 없으면 seed는 예전처럼 샘플 데이터만 넣습니다.
 
 **캐릭터 스킬 데이터 출처**: `/v2/data` 44개 테이블 어디에도 스킬 이름/설명은 없지만, 로컬라이제이션 텍스트 안에 `Skill/Group/{Name,Desc}/1{캐릭터코드:3자리}{100|200|300|400|500}` 형태의 미문서화 키로 패시브+스킬1~4가 다 들어있습니다(공식 문서엔 없고 재키 스킬명으로 역추적해서 찾음). 2026-10 기준 91명 전원을 커버합니다(키가 없는 캐릭터는 상세 화면에 "스킬 정보는 준비 중입니다"로 표시).
 

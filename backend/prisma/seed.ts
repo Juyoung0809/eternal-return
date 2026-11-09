@@ -1,9 +1,21 @@
-// Sample codex data so the app is browsable out of the box.
-// Replace/expand with real game data as it's curated — this is just a starter set.
+// Fills the database after a migration reset (Prisma runs this after `prisma migrate
+// reset`) or via `npm run seed`. With prisma/snapshot.db.gz present (`npm run
+// db:snapshot` after a full import) the real game data is restored from it; without
+// one, a tiny sample set keeps the app browsable until `er:import` runs.
 import "dotenv/config";
 import { prisma } from "../src/prisma.js";
+import { hasSnapshot, restoreSnapshot, SNAPSHOT_PATH } from "./snapshot.js";
 
 async function main() {
+  if (hasSnapshot()) {
+    const copied = restoreSnapshot();
+    const summary = Object.entries(copied)
+      .map(([table, rows]) => `${table} ${rows}`)
+      .join(", ");
+    console.log(`Restored ${SNAPSHOT_PATH}: ${summary}`);
+    return;
+  }
+
   await prisma.skill.deleteMany();
   await prisma.character.deleteMany();
   await prisma.item.deleteMany();

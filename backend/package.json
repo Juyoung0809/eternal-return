@@ -12,6 +12,7 @@
     "prisma:migrate": "prisma migrate dev",
     "db:setup": "prisma migrate deploy",
     "seed": "prisma migrate deploy && tsx prisma/seed.ts",
+    "db:snapshot": "tsx scripts/snapshotDb.ts",
     "er:check": "tsx scripts/checkErApiKey.ts",
     "er:sync": "tsx scripts/fetchErData.ts",
     "er:import": "tsx scripts/importErData.ts",
