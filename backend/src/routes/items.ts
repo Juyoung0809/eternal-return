@@ -11,8 +11,14 @@ export const itemsRouter = Router();
 //   - 502207 망원 카메라 (the duplicate that's only an ingredient), 502209 위장 카메라 (its
 //     product), 502210 모닥불, 504201 아글라이아의 선물 - 고급.
 //   - 303501-303510: 현상금 and the 크레딧 / 크레딧+ / 크레딧++ currency pickups.
+//   - anything without an icon (the fankit has no art for it — 카드모스의 부름 Lv2, SCV,
+//     ...): a lettered placeholder in an icon grid reads as broken.
 const HIDDEN_TYPES = ["재료"];
 const HIDDEN_CODES = [502207, 502209, 502210, 504201, ...Array.from({ length: 10 }, (_, i) => 303501 + i)];
+
+// Tools rather than ingredients: the API lists 모닥불 as a "material" of 11 cooked foods
+// (you cook at a bonfire), so recipes drop it — 뜨거운 물 reads as 물, not 물 + 모닥불.
+const NON_INGREDIENT_CODES = new Set([502210]);
 
 // GET /api/items — browsable items, light fields only (the browser shows them as small
 // icons and filters client-side); optional ?type= & ?grade= to narrow.
@@ -29,6 +35,7 @@ itemsRouter.get("/", async (req, res) => {
       where: {
         AND: [
           { type: { notIn: HIDDEN_TYPES } },
+          { imageUrl: { not: "" } },
           { code: { notIn: HIDDEN_CODES } },
           { type: typeof type === "string" ? type : undefined, grade },
         ],
@@ -97,7 +104,7 @@ function decodeItem({ spawnAreas, droppedBy, materials, materialOf, ...rest }: I
     ...rest,
     spawnAreas: JSON.parse(spawnAreas) as string[],
     droppedBy: JSON.parse(droppedBy) as string[],
-    ...(materials && { materials: materials.map(decodeItem) }),
+    ...(materials && { materials: materials.filter((m) => !NON_INGREDIENT_CODES.has(m.code)).map(decodeItem) }),
     ...(materialOf && { materialOf: materialOf.map(decodeItem) }),
   };
 }
