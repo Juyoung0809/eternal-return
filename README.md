@@ -94,7 +94,7 @@ npm run dev                  # 백엔드(4000) + 프론트엔드(5173) 동시 �
 - 스킨: `06.`~`98.` 폴더의 `*Full*` 이미지 → `Skin`. 폴더 이름(예: `ExecutionER Jackie`)을 공식 `CharacterSkin` 테이블의 영문 이름과 대소문자·기호 무시하고 맞춰서, 한국어 스킨 이름(`Skin/Name/{코드}`, 예: "처형자 재키")을 붙입니다.
 - 스킬 아이콘: `03. Skill Icon/` 파일 이름의 `P`/`T`/`Passive`·`Q`·`W`·`E`·`R` → `Skill.imageUrl`. 이름 규칙이 실험체마다 달라서(`Jackie_Q1`, `01. P`, `Cathy_T`, `Yuki_Passive` 등) 느슨하게 매칭합니다.
 
-- 아이템·특성·전술 스킬 아이콘: `02. Ingame_Image/`의 파일 이름(영문)을 공식 l10n 영문 이름(`Item/Name`, `Trait/Name`, `Skill/Group/Name`)과 맞춥니다. 특성 그룹 아이콘은 `07. Loadout/01. Havoc/Havoc1.png` 같은 파일입니다. 팬키트 파일 이름의 오타(`Miltary Suit`, `Shapened Spear` 등)는 편집 거리 1~2 이내에서 가장 가까운 하나만 허용하고, 6등급 변형(`-진홍`/`-새벽`)과 `Lv2` 아이템은 기본 아이템 아이콘을 씁니다.
+- 아이템·특성·전술 스킬 아이콘: `02. Ingame_Image/`의 파일 이름(영문)을 공식 l10n 영문 이름(`Item/Name`, `Trait/Name`, `Skill/Group/Name`)과 맞춥니다. 특성 그룹 아이콘은 `07. Loadout/01. Havoc/Havoc1.png` 같은 파일입니다. 파일 이름의 괄호 설명(`SCV (Self-Controlled Vehicle)`)은 무시하고, 게임에서 영어 이름이 바뀐 아이템 3개(Instant Camera→Polaroid Camera, Fencing Rapier→Rapier, Twin Blades→Twin Swords)는 `ITEM_NAME_ALIASES`로 예전 파일 이름에 연결합니다. 팬키트 파일 이름의 오타(`Miltary Suit`, `Shapened Spear` 등)는 편집 거리 1~2 이내에서 가장 가까운 하나만 허용하고, 6등급 변형(`-진홍`/`-새벽`)과 `Lv2` 아이템은 기본 아이템 아이콘을 씁니다.
 
 파일을 레포에 넣지 않고 DB에는 `/api/images/{fileId}?w={폭}`(프로필 256px, 전신 1000px, 아이콘 128px)을 저장합니다. 구글이 다른 사이트에서 삽입한 Drive 이미지를 429로 막아서, 백엔드(`src/routes/images.ts`)가 대신 받아 `backend/data/images`에 캐시해 둡니다. `er:import`는 스킬을 다시 만들 때 기존 아이콘 URL을 유지합니다.
 

@@ -173,7 +173,19 @@ async function linkCharacterArt(root: DriveFile[]) {
   console.log(`\nLinked fankit art for ${linked}/${characters.length} characters.`);
 }
 
-const fileKey = (fileName: string) => normalize(stripNumber(fileName.replace(/\.[a-z0-9]+$/i, "")));
+// "021. SCV (Self-Controlled Vehicle).png" -> "scv": a parenthetical gloss isn't part
+// of the item's name.
+const fileKey = (fileName: string) =>
+  normalize(stripNumber(fileName.replace(/\.[a-z0-9]+$/i, "").replace(/\s*\([^)]*\)/g, "")));
+
+// Items the game has since renamed in English while the fankit keeps the old file
+// name. Matched by folder and grade slot (e.g. Rapier is the 고급 entry of the rapier
+// folder, Twin Swords the 일반 entry of dual swords).
+const ITEM_NAME_ALIASES: Record<string, string> = {
+  "Instant Camera": "Polaroid Camera", // 폴라로이드 카메라
+  "Fencing Rapier": "Rapier", // 레이피어
+  "Twin Blades": "Twin Swords", // 쌍칼
+};
 
 function editDistance(a: string, b: string): number {
   let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
@@ -239,7 +251,8 @@ async function linkIngameIcons(root: DriveFile[]) {
   const items = await prisma.item.findMany({ select: { code: true } });
   let itemHits = 0;
   for (const item of items) {
-    const file = findItemIcon(en.get(`Item/Name/${item.code}`));
+    const englishName = en.get(`Item/Name/${item.code}`);
+    const file = findItemIcon(englishName) ?? findItemIcon(englishName && ITEM_NAME_ALIASES[englishName]);
     if (!file) continue;
     itemHits++;
     await prisma.item.update({ where: { code: item.code }, data: { imageUrl: driveImage(file.id, 128) } });
