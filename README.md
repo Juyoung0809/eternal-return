@@ -91,7 +91,7 @@ npm run dev                  # 백엔드(4000) + 프론트엔드(5173) 동시 �
 - `01. Character/{번호}. {영문명}/` — 폴더 번호는 실험체 코드와 일부 어긋나므로(예: `003. Hyunwoo`인데 현우의 코드는 7) **영문명으로 매칭**합니다. 대소문자·악센트(`István`)는 무시하며, NPC 폴더는 맞는 실험체가 없어 건너뜁니다.
 - 프로필: `02. Default/*_Mini_00.png` → `Character.imageUrl`
 - 전신(기본 스킨): `02. Default/*_Full_00.png` → `Character.fullImageUrl` + `Skin`(기본 스킨)
-- 스킨: `06.`~`98.` 폴더의 `*Full*` 이미지 → `Skin`. 폴더 이름(예: `ExecutionER Jackie`)을 공식 `CharacterSkin` 테이블의 영문 이름과 대소문자·기호 무시하고 맞춰서, 한국어 스킨 이름(`Skin/Name/{코드}`, 예: "처형자 재키")을 붙입니다.
+- 스킨: `06.`~`98.` 폴더의 `*Full*` 이미지 → `Skin`. 공식 `CharacterSkin` 테이블과 짝지어 한국어 스킨 이름(`Skin/Name/{코드}`)을 붙입니다. 팬키트 폴더 이름은 공식 영어 이름과 자주 달라서(`ExecutionER Jackie`, 오타 `1st Anniversery`, 다른 표현 `Grim ReapER Luke` = Gilded Reaper Luke) 실험체마다 ① 대소문자·기호 무시 정확히 일치 ② 가장 비슷한 이름끼리(편집 거리 50% 이내) ③ 하나씩만 남으면 서로 짝 순서로 맞춥니다. 공식 데이터에 영어 이름이 겹치는 에키온 스킨 하나만 `SKIN_FOLDER_CODES`로 직접 지정합니다. 매그너스의 "Mk. VIII Destroyer M.A.G"는 공식 한국어 이름 자체가 영어입니다.
 - 스킬 아이콘: `03. Skill Icon/` 파일 이름의 `P`/`T`/`Passive`·`Q`·`W`·`E`·`R` → `Skill.imageUrl`. 이름 규칙이 실험체마다 달라서(`Jackie_Q1`, `01. P`, `Cathy_T`, `Yuki_Passive` 등) 느슨하게 매칭합니다.
 
 - 아이템·특성·전술 스킬 아이콘: `02. Ingame_Image/`의 파일 이름(영문)을 공식 l10n 영문 이름(`Item/Name`, `Trait/Name`, `Skill/Group/Name`)과 맞춥니다. 특성 그룹 아이콘은 `07. Loadout/01. Havoc/Havoc1.png` 같은 파일입니다. 파일 이름의 괄호 설명(`SCV (Self-Controlled Vehicle)`)은 무시하고, 게임에서 영어 이름이 바뀐 아이템 3개(Instant Camera→Polaroid Camera, Fencing Rapier→Rapier, Twin Blades→Twin Swords)는 `ITEM_NAME_ALIASES`로 예전 파일 이름에 연결합니다. 팬키트 파일 이름의 오타(`Miltary Suit`, `Shapened Spear` 등)는 편집 거리 1~2 이내에서 가장 가까운 하나만 허용하고, 6등급 변형(`-진홍`/`-새벽`)과 `Lv2` 아이템은 기본 아이템 아이콘을 씁니다.

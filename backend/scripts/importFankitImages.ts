@@ -79,6 +79,57 @@ function iconSlot(fileName: string): string | undefined {
   return letter ? ICON_SLOTS[letter] : undefined;
 }
 
+interface SkinFolder {
+  englishName: string;
+  fileId: string;
+  order: number;
+}
+
+// Fankit folders the steps below can't place: the API gives two Echion skins the same
+// English name ("Underworld Org Echion" = 암흑가 / 이단심판관 에키온).
+const SKIN_FOLDER_CODES: Record<string, number> = {
+  "Ruthless Inquisitor Echion": 1044004,
+};
+const MAX_SKIN_NAME_DISTANCE = 0.5; // edit distance / name length
+
+// Pairs a character's fankit skin folders with its API skins (for the Korean name).
+// Folder names often differ from the API's English names — the fankit's "-ER"
+// stylization ("ExecutionER Jackie"), typos ("1st Anniversery"), or marketing names
+// ("Grim ReapER Luke" vs "Gilded Reaper Luke") — so, in order:
+//   1. exact match, ignoring case and punctuation, and the overrides above;
+//   2. the closest remaining names, most similar pair first, if close enough;
+//   3. if exactly one folder and one API skin are left, they're each other.
+function matchSkins(folders: SkinFolder[], apiSkins: Array<Record<string, any>>) {
+  const result = new Map<SkinFolder, Record<string, any>>();
+  const open = new Set(apiSkins);
+  const take = (folder: SkinFolder, skin: Record<string, any>) => {
+    result.set(folder, skin);
+    open.delete(skin);
+  };
+  for (const folder of folders) {
+    const override = SKIN_FOLDER_CODES[folder.englishName];
+    const skin = [...open].find((s) =>
+      override !== undefined ? s.code === override : normalize(s.name) === normalize(folder.englishName),
+    );
+    if (skin) take(folder, skin);
+  }
+  const pairs = folders
+    .filter((f) => !result.has(f))
+    .flatMap((folder) =>
+      [...open].map((skin) => {
+        const a = normalize(folder.englishName);
+        const b = normalize(skin.name);
+        return { folder, skin, score: editDistance(a, b) / Math.max(a.length, b.length) };
+      }),
+    )
+    .filter((p) => p.score <= MAX_SKIN_NAME_DISTANCE)
+    .sort((x, y) => x.score - y.score || x.skin.code - y.skin.code);
+  for (const { folder, skin } of pairs) if (!result.has(folder) && open.has(skin)) take(folder, skin);
+  const leftFolders = folders.filter((f) => !result.has(f));
+  if (leftFolders.length === 1 && open.size === 1) take(leftFolders[0], [...open][0]);
+  return result;
+}
+
 async function main() {
   const root = await listFolder();
   // `-- --icons-only` skips the slow per-character walk.
@@ -134,18 +185,19 @@ async function linkCharacterArt(root: DriveFile[]) {
       const defaultSkin = characterSkins.find((s) => s.index === 0);
       skins.push({ code: defaultSkin?.code ?? null, name: "기본 스킨", imageUrl: driveImage(full.id, 1000), order: 0 });
     }
+    const folders: SkinFolder[] = [];
     for (const skinFolder of skinFolders) {
       const skinFull = (await listFolder(skinFolder.id)).find((f) => /full/i.test(f.name));
-      if (!skinFull) continue;
-      const englishName = stripNumber(skinFolder.name);
-      // Folder names use the fankit's "-ER" stylization ("ExecutionER Jackie"); compare
-      // case/punctuation-insensitively against the API's English skin names.
-      const apiSkin = characterSkins.find((s) => normalize(s.name) === normalize(englishName));
+      if (skinFull) folders.push({ englishName: stripNumber(skinFolder.name), fileId: skinFull.id, order: folderNumber(skinFolder) });
+    }
+    const apiSkinFor = matchSkins(folders, characterSkins.filter((s) => s.index !== 0));
+    for (const folder of folders) {
+      const apiSkin = apiSkinFor.get(folder);
       skins.push({
         code: apiSkin?.code ?? null,
-        name: (apiSkin && l10n.get(`Skin/Name/${apiSkin.code}`)?.trim()) || englishName,
-        imageUrl: driveImage(skinFull.id, 1000),
-        order: folderNumber(skinFolder),
+        name: (apiSkin && l10n.get(`Skin/Name/${apiSkin.code}`)?.trim()) || folder.englishName,
+        imageUrl: driveImage(folder.fileId, 1000),
+        order: folder.order,
       });
     }
     await prisma.skin.deleteMany({ where: { characterId: character.id } });
